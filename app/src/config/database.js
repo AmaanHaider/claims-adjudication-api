@@ -1,3 +1,6 @@
+require("pg");
+require("pg-hstore");
+
 const { Sequelize } = require("sequelize");
 
 function shouldUseSsl(databaseUrl) {

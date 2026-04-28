@@ -142,14 +142,73 @@ describe("Claims API (integration)", () => {
   });
 
   it("POST /claims adjudicates each line item using policy version active on its date of service", async () => {
-    // Clear any prior usage rows from past runs for this member/service/year/version combo (non-destructive to other data).
+    // Test isolation: use a non-overlapping year/version range and create all fixtures inside the test.
+    // This avoids accidentally matching pre-existing PolicyVersion rows for the same policyId.
+    const isoPolicyVersionIdV1 = 93101;
+    const isoPolicyVersionIdV2 = 93102;
+    const isoBenefitYear = 2027;
+    const isoDateV1 = "2027-02-10";
+    const isoDateV2 = "2027-05-10";
+
+    await CoverageRule.destroy({
+      where: { policyVersionId: [isoPolicyVersionIdV1, isoPolicyVersionIdV2] },
+    });
+    await PolicyVersion.destroy({
+      where: { id: [isoPolicyVersionIdV1, isoPolicyVersionIdV2] },
+    });
     await UsageLedger.destroy({
       where: {
         memberId,
+        policyVersionId: [isoPolicyVersionIdV1, isoPolicyVersionIdV2],
         serviceType: "physical_therapy",
-        benefitYear: 2026,
-        policyVersionId: [policyVersionIdV1, policyVersionIdV3],
+        benefitYear: isoBenefitYear,
       },
+    });
+
+    await PolicyVersion.upsert({
+      id: isoPolicyVersionIdV1,
+      policyId,
+      versionName: "test-iso-v1",
+      effectiveFrom: "2027-01-01",
+      effectiveTo: "2027-03-31",
+    });
+    await PolicyVersion.upsert({
+      id: isoPolicyVersionIdV2,
+      policyId,
+      versionName: "test-iso-v2",
+      effectiveFrom: "2027-04-01",
+      effectiveTo: null,
+    });
+
+    await CoverageRule.upsert({
+      id: 96101,
+      policyVersionId: isoPolicyVersionIdV1,
+      serviceType: "dental",
+      covered: false,
+      payPercent: 0,
+    });
+    await CoverageRule.upsert({
+      id: 96102,
+      policyVersionId: isoPolicyVersionIdV2,
+      serviceType: "dental",
+      covered: true,
+      payPercent: 100,
+    });
+    await CoverageRule.upsert({
+      id: 96103,
+      policyVersionId: isoPolicyVersionIdV1,
+      serviceType: "physical_therapy",
+      covered: true,
+      payPercent: 80,
+      annualLimitCents: 100000,
+    });
+    await CoverageRule.upsert({
+      id: 96104,
+      policyVersionId: isoPolicyVersionIdV2,
+      serviceType: "physical_therapy",
+      covered: true,
+      payPercent: 80,
+      annualLimitCents: 100000,
     });
 
     const res = await request(app).post("/claims").send({
@@ -158,11 +217,11 @@ describe("Claims API (integration)", () => {
       diagnosisCodes: ["Z00.0"],
       lineItems: [
         // V1 date
-        { serviceType: "dental", amountCents: 15000, dateOfService: "2026-02-10" },
-        { serviceType: "physical_therapy", amountCents: 10000, dateOfService: "2026-02-10" },
-        // V3 date
-        { serviceType: "dental", amountCents: 15000, dateOfService: "2026-05-10" },
-        { serviceType: "physical_therapy", amountCents: 10000, dateOfService: "2026-05-10" },
+        { serviceType: "dental", amountCents: 15000, dateOfService: isoDateV1 },
+        { serviceType: "physical_therapy", amountCents: 10000, dateOfService: isoDateV1 },
+        // V2 date
+        { serviceType: "dental", amountCents: 15000, dateOfService: isoDateV2 },
+        { serviceType: "physical_therapy", amountCents: 10000, dateOfService: isoDateV2 },
       ],
     });
 
@@ -177,21 +236,21 @@ describe("Claims API (integration)", () => {
     }));
 
     const dentalV1 = decisions.find(
-      (d) => d.lineItem?.serviceType === "dental" && d.lineItem?.dateOfService === "2026-02-10"
+      (d) => d.lineItem?.serviceType === "dental" && d.lineItem?.dateOfService === isoDateV1
     );
-    const dentalV3 = decisions.find(
-      (d) => d.lineItem?.serviceType === "dental" && d.lineItem?.dateOfService === "2026-05-10"
+    const dentalV2 = decisions.find(
+      (d) => d.lineItem?.serviceType === "dental" && d.lineItem?.dateOfService === isoDateV2
     );
     expect(dentalV1?.status).toBe("denied");
-    expect(dentalV3?.status).toBe("approved");
+    expect(dentalV2?.status).toBe("approved");
 
     // Usage ledger must be tracked per policyVersionId.
     const ledgerRows = await UsageLedger.findAll({
-      where: { memberId, serviceType: "physical_therapy", benefitYear: 2026 },
+      where: { memberId, serviceType: "physical_therapy", benefitYear: isoBenefitYear },
     });
     const usedByPolicyVersionId = new Map(ledgerRows.map((r) => [r.policyVersionId, r.usedAmountCents]));
-    expect(usedByPolicyVersionId.get(policyVersionIdV1)).toBe(10000);
-    expect(usedByPolicyVersionId.get(policyVersionIdV3)).toBe(10000);
+    expect(usedByPolicyVersionId.get(isoPolicyVersionIdV1)).toBe(10000);
+    expect(usedByPolicyVersionId.get(isoPolicyVersionIdV2)).toBe(10000);
   });
 
   it("GET /claims/:id returns claim with line items and decisions", async () => {

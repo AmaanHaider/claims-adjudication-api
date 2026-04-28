@@ -2,6 +2,8 @@
 
 API-only claims adjudication system (deterministic, rule-based).
 
+This submission focuses on domain modeling, adjudication logic, lifecycle state handling, and explainable decisions. It intentionally does not include a frontend.
+
 ## Stack
 
 - Node.js + Express
@@ -58,6 +60,22 @@ When the server is running:
 ```bash
 npm test -- --run
 ```
+
+## What is implemented
+
+- Claim submission with multiple line items
+- Policy/version resolution per line item using each line item's `dateOfService`
+- Line-item adjudication against stored coverage rules
+- Claim and line-item lifecycle states
+- Human-readable explanations on decisions
+- Manual review, payment, and dispute endpoints
+- Swagger/OpenAPI documentation
+
+## Known limitations
+
+- `AuditLog` is modeled but not yet populated by lifecycle actions.
+- Deductible behavior is represented in the rule model but not fully implemented end to end.
+- Integration tests use the configured `DATABASE_URL`, so a hosted Postgres instance can make test runs slower than local development.
 
 ## Example: submit a claim
 

@@ -31,9 +31,10 @@ function makeDecision({
   };
 }
 
-function adjudicateLineItem({ lineItem, coverageRules, usageLedger, benefitYear }) {
+function adjudicateLineItem({ lineItem, coverageRules, usageLedger, benefitYear, options = {} }) {
   const submittedAmountCents = Number(lineItem?.amountCents) || 0;
   const serviceType = lineItem?.serviceType;
+  const ignoreReviewThreshold = options && options.ignoreReviewThreshold === true;
 
   const rule = findCoverageRule(coverageRules, serviceType);
   if (!rule) {
@@ -58,6 +59,7 @@ function adjudicateLineItem({ lineItem, coverageRules, usageLedger, benefitYear 
   }
 
   if (
+    !ignoreReviewThreshold &&
     Number.isFinite(rule.reviewRequiredOverCents) &&
     rule.reviewRequiredOverCents !== null &&
     submittedAmountCents > rule.reviewRequiredOverCents

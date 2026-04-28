@@ -22,3 +22,5 @@ This file captures notable corrections and course changes made during AI-assiste
 
 - Broke the large documentation task into the **exact required deliverables** and ensured content stays specific to this project.
 - Ensured the adjudication path remains **deterministic** and contains **no AI calls at runtime**.
+- Identified an implementation mismatch where claims were initially anchored to one policy version per claim, then corrected the code and docs so policy version resolution now happens per line item by date of service.
+- Identified that manual review approval initially bypassed annual-limit logic, then corrected it so reviewed approval now reuses adjudication constraints and cannot over-allow when benefit is exhausted.

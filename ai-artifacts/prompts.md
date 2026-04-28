@@ -35,3 +35,9 @@ This file summarizes notable prompt themes used during development.
 ## Adding Swagger/docs
 
 - “Add Swagger/OpenAPI and document endpoints, request/response shapes, and status rules.”
+
+## Reviewing domain gaps before submission
+
+- “Compare the documented insurance model to the running code and call out mismatches that matter.”
+- “Identify the highest-value fixes for strengthening the submission without expanding scope too much.”
+- “Distinguish missing required deliverables from domain-correctness gaps.”

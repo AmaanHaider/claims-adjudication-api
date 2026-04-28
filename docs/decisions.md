@@ -58,6 +58,18 @@ API documentation:
 
 This keeps adjudication logic simple while allowing policy changes over time via `PolicyVersion`.
 
+## Important implementation choices
+
+- **Line-item policy version resolution**:
+  - Claim submission resolves policy version **per line item** using each line item’s `dateOfService`.
+  - This allows a single claim spanning policy changes to adjudicate each line item against the correct version’s rules.
+- **Usage ledger semantics**:
+  - `UsageLedger.usedAmountCents` tracks approved `allowedAmountCents`, not insurer-paid amount.
+  - This was chosen because annual benefit exhaustion is typically about covered usage consumed against a benefit cap, not only the carrier payment after coinsurance.
+- **Manual review as a state transition, not a new decision engine**:
+  - Review currently changes `needs_review` items to `manually_approved` or `manually_denied`.
+  - Manual approval reuses the same adjudication constraints as automatic adjudication (e.g. annual limits), so reviewed approval may be partial or may result in `manually_denied` when no benefit remains.
+
 ## State management decisions
 
 - **Line item status** is derived from adjudication or manual review:
@@ -89,11 +101,12 @@ This keeps adjudication logic simple while allowing policy changes over time via
 - Full deductible accumulation logic (field exists; end-to-end deductible math not implemented)
 - A full migrations workflow (sync used instead, per assignment simplicity)
 - Admin tooling / backoffice UI
+- Audit-log writes for lifecycle transitions
 
 ## Assumptions
 
 - Money is stored in cents (integers), not floating-point dollars.
-- Coverage rules are determined by `serviceType` and the active policy version for the date of service.
+- Coverage rules are determined by `serviceType` and the active policy version selected during claim submission.
 - Manual review is only supported for items currently in `needs_review`.
 - Claim payment is only allowed when the claim is `approved` or `partially_approved`.
 - Disputes are allowed for `approved`, `partially_approved`, `denied`, and `paid` claims.
@@ -105,3 +118,5 @@ This keeps adjudication logic simple while allowing policy changes over time via
 - Improve deductible handling and accumulators (per member, per policy year).
 - Add richer dispute workflow states and audit logging for state changes.
 - Add filtering/pagination for list endpoints.
+- Expand tests and fixtures around policy-version changes over time.
+- Expand manual review edge-case coverage (annual-limit exhaustion, repeated reviews).

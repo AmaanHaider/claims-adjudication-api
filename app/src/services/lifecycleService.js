@@ -11,7 +11,7 @@ const {
   Dispute,
 } = require("../models");
 
-const { calculateClaimStatus } = require("./adjudicationService");
+const { adjudicateLineItem, calculateClaimStatus } = require("./adjudicationService");
 
 function getBenefitYear(dateOfService) {
   return Number(String(dateOfService).slice(0, 4));
@@ -72,19 +72,44 @@ async function reviewClaimLineItem({ claimId, lineItemId, decision, explanation 
     const submittedAmountCents = lineItem.amountCents;
 
     if (normalized === "approved") {
-      const payPercent = coverageRule ? Number(coverageRule.payPercent) || 0 : 0;
-      const allowedAmountCents = submittedAmountCents;
-      const payableAmountCents = Math.round((allowedAmountCents * payPercent) / 100);
+      const benefitYear = getBenefitYear(lineItem.dateOfService);
 
-      await lineItem.update({ status: "manually_approved" }, { transaction: t });
+      const usageLedgerRows = coverageRule?.policyVersionId
+        ? await UsageLedger.findAll({
+            where: {
+              memberId: claim.memberId,
+              policyVersionId: coverageRule.policyVersionId,
+              serviceType: lineItem.serviceType,
+              benefitYear,
+            },
+            transaction: t,
+          })
+        : [];
+
+      const recalculated = adjudicateLineItem({
+        lineItem: {
+          serviceType: lineItem.serviceType,
+          amountCents: submittedAmountCents,
+          dateOfService: lineItem.dateOfService,
+        },
+        coverageRules: coverageRule ? [coverageRule] : [],
+        usageLedger: usageLedgerRows.map((r) => r.toJSON()),
+        benefitYear,
+        options: { ignoreReviewThreshold: true },
+      });
+
+      const manualStatus = recalculated.status === "approved" ? "manually_approved" : "manually_denied";
+
+      await lineItem.update({ status: manualStatus }, { transaction: t });
 
       if (existingDecision) {
         await existingDecision.update(
           {
-            status: "manually_approved",
-            allowedAmountCents,
-            payableAmountCents,
-            memberResponsibilityCents: submittedAmountCents - payableAmountCents,
+            status: manualStatus,
+            coverageRuleId: recalculated.coverageRuleId,
+            allowedAmountCents: recalculated.allowedAmountCents,
+            payableAmountCents: recalculated.payableAmountCents,
+            memberResponsibilityCents: recalculated.memberResponsibilityCents,
             explanation,
           },
           { transaction: t }
@@ -94,12 +119,12 @@ async function reviewClaimLineItem({ claimId, lineItemId, decision, explanation 
           {
             claimId,
             claimLineItemId: lineItemId,
-            coverageRuleId: coverageRule?.id ?? null,
-            status: "manually_approved",
+            coverageRuleId: recalculated.coverageRuleId,
+            status: manualStatus,
             submittedAmountCents,
-            allowedAmountCents,
-            payableAmountCents,
-            memberResponsibilityCents: submittedAmountCents - payableAmountCents,
+            allowedAmountCents: recalculated.allowedAmountCents,
+            payableAmountCents: recalculated.payableAmountCents,
+            memberResponsibilityCents: recalculated.memberResponsibilityCents,
             explanation,
           },
           { transaction: t }
@@ -107,8 +132,13 @@ async function reviewClaimLineItem({ claimId, lineItemId, decision, explanation 
       }
 
       // Update annual limit usage ledger (tracks allowed amount usage).
-      if (coverageRule && coverageRule.annualLimitCents !== null && coverageRule.annualLimitCents !== undefined) {
-        const benefitYear = getBenefitYear(lineItem.dateOfService);
+      if (
+        manualStatus === "manually_approved" &&
+        coverageRule &&
+        coverageRule.annualLimitCents !== null &&
+        coverageRule.annualLimitCents !== undefined &&
+        recalculated.allowedAmountCents > 0
+      ) {
         const existingLedger = await UsageLedger.findOne({
           where: {
             memberId: claim.memberId,
@@ -120,7 +150,7 @@ async function reviewClaimLineItem({ claimId, lineItemId, decision, explanation 
         });
         if (existingLedger) {
           await existingLedger.update(
-            { usedAmountCents: existingLedger.usedAmountCents + allowedAmountCents },
+            { usedAmountCents: existingLedger.usedAmountCents + recalculated.allowedAmountCents },
             { transaction: t }
           );
         } else {
@@ -130,7 +160,7 @@ async function reviewClaimLineItem({ claimId, lineItemId, decision, explanation 
               policyVersionId: coverageRule.policyVersionId,
               serviceType: lineItem.serviceType,
               benefitYear,
-              usedAmountCents: allowedAmountCents,
+              usedAmountCents: recalculated.allowedAmountCents,
             },
             { transaction: t }
           );

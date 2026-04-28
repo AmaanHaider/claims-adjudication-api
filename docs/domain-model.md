@@ -2,7 +2,7 @@
 
 ## Overview
 
-This system adjudicates insurance reimbursement claims. A **Member** submits a **Claim** containing multiple **ClaimLineItems**. Each line item is evaluated against the member’s active **Policy** (via **MemberPolicyEnrollment**) and the applicable **PolicyVersion** for the date of service. Coverage is represented as rows in **CoverageRule**. The adjudication result is persisted as a **ClaimDecision** per line item, with a human-readable explanation. Annual benefit usage is tracked in **UsageLedger**.
+This system adjudicates insurance reimbursement claims. A **Member** submits a **Claim** containing multiple **ClaimLineItems**. Each line item is evaluated against the member's active **Policy** (via **MemberPolicyEnrollment**) and the applicable **PolicyVersion** for that line item's date of service. Coverage is represented as rows in **CoverageRule**. The adjudication result is persisted as a **ClaimDecision** per line item, with a human-readable explanation. Annual benefit usage is tracked in **UsageLedger** (keyed by member + policy version + service type + benefit year).
 
 ## Entities (important fields)
 
@@ -134,6 +134,13 @@ For each submitted line item:
 6. Compute `payableAmountCents` and `memberResponsibilityCents`.
 7. Persist a `ClaimDecision` with an explanation.
 8. If applicable, update `UsageLedger` for annual limit services.
+
+## Current implementation notes
+
+- Claim submission resolves **policy version per line item** using that line item’s `dateOfService`.
+- `UsageLedger.usedAmountCents` is updated by approved `allowedAmountCents`, not by insurer-paid amount. This models benefit consumption as covered usage rather than carrier payout.
+- Manual review changes a `needs_review` item to `manually_approved` or `manually_denied`. Manual approval reuses the same adjudication constraints as automatic adjudication (e.g. annual limits), which means reviewed approval may be partial (only remaining benefit allowed) or may result in `manually_denied` when no benefit remains.
+- `AuditLog` exists in the schema but is not yet populated by review, pay, or dispute transitions.
 
 ## Explanation capability
 

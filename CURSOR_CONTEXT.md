@@ -110,6 +110,7 @@ app/
 
     services/
       claimService.js
+      lifecycleService.js
       policyService.js
       adjudicationService.js
       usageLedgerService.js
@@ -174,7 +175,7 @@ Fields:
 
 ### PolicyVersion
 
-Rules change over time. Claims should be adjudicated against the policy version active on the date of service.
+Rules change over time. Each line item is adjudicated against the policy version active on that line item's date of service.
 
 Fields:
 
@@ -410,13 +411,13 @@ Workflow:
 1. Validate request body manually.
 2. Find member.
 3. Find member's active policy enrollment.
-4. Find active policy version for date of service.
+4. Find active policy version per line item date of service.
 5. Load coverage rules.
 6. Create claim with status submitted.
 7. Create claim line items.
 8. Adjudicate each line item.
 9. Save claim decisions.
-10. Update usage ledger for approved payable amounts.
+10. Update usage ledger for approved allowed amounts on annual-limit services.
 11. Calculate claim total payable.
 12. Calculate overall claim status.
 13. Return claim with line item decisions and explanations.
@@ -438,7 +439,7 @@ For each line item:
    mark needs_review with explanation.
 
 5. If annualLimitCents exists:
-   check UsageLedger for member + serviceType + benefitYear.
+   check UsageLedger for member + policyVersionId + serviceType + benefitYear.
    remaining = annualLimit - alreadyUsed.
 
    If remaining <= 0:
@@ -456,6 +457,18 @@ For each line item:
 
 Important: use cents for money. Do not use floating dollar amounts for storage.
 
+## Current Implementation Notes
+
+The running code intentionally keeps a few shortcuts and known limitations:
+
+```text
+- claim submission resolves policy version per line item using each line item’s date of service
+- UsageLedger rows are keyed by policyVersionId so annual limits are tracked per policy version
+- manual review approval reuses adjudication constraints (e.g. annual limits), so reviewed approval may be partial (only remaining benefit allowed) or may result in manually_denied when no benefit remains
+- UsageLedger tracks approved allowedAmountCents rather than insurer-paid amount
+- AuditLog exists in the model layer but is not yet populated by lifecycle transitions
+```
+
 ## Edge Cases To Handle
 
 Must handle:
@@ -472,6 +485,12 @@ cannot pay under_review claim
 cannot pay denied claim
 can dispute approved, partially_approved, or denied claim
 manual review can approve or deny needs_review items
+```
+
+Known gap:
+
+```text
+manual review is still a simple state transition (it stores reviewer explanation and updates financials/usage consistently), and deductible accumulation remains unimplemented
 ```
 
 ## Tests

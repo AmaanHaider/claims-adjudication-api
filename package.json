@@ -11,7 +11,9 @@
     "start": "node app/src/server.js",
     "dev": "nodemon app/src/server.js",
     "test:api": "vitest app/tests/claims.api.test.js",
-    "test:unit": "vitest app/tests/adjudication.test.js"
+    "test:unit": "vitest app/tests/adjudication.test.js",
+    "db:seed": "node app/src/seed/seedData.js",
+    "db:migrate": "node -e \"console.log('No migrations configured yet.'); process.exit(0)\""
   },
   "repository": {
     "type": "git",
@@ -28,10 +30,14 @@
   "dependencies": {
     "dotenv": "^17.2.1",
     "express": "^5.1.0",
-    "morgan": "^1.10.1"
+    "morgan": "^1.10.1",
+    "pg": "^8.20.0",
+    "pg-hstore": "^2.3.4",
+    "sequelize": "^6.37.8"
   },
   "devDependencies": {
     "nodemon": "^3.1.10",
+    "sequelize-cli": "^6.6.5",
     "supertest": "^7.1.4",
     "vitest": "^3.2.4"
   }

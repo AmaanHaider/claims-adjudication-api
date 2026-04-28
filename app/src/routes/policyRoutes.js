@@ -2,9 +2,9 @@ const express = require("express");
 
 const router = express.Router();
 
-// Endpoints will be implemented in later steps.
-router.use((req, res) => {
-  res.status(501).json({ error: { message: "Not implemented" } });
-});
+const policyController = require("../controllers/policyController");
+
+router.get("/", policyController.listPolicies);
+router.get("/:id", policyController.getPolicyById);
 
 module.exports = router;

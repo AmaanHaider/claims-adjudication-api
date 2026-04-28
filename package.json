@@ -24,5 +24,15 @@
   "bugs": {
     "url": "https://github.com/AmaanHaider/claims-adjudication-api/issues"
   },
-  "homepage": "https://github.com/AmaanHaider/claims-adjudication-api#readme"
+  "homepage": "https://github.com/AmaanHaider/claims-adjudication-api#readme",
+  "dependencies": {
+    "dotenv": "^17.2.1",
+    "express": "^5.1.0",
+    "morgan": "^1.10.1"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.10",
+    "supertest": "^7.1.4",
+    "vitest": "^3.2.4"
+  }
 }

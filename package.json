@@ -1,0 +1,28 @@
+{
+  "name": "claims-adjudication-api",
+  "version": "1.0.0",
+  "description": "",
+  "main": "app/src/server.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "test": "vitest",
+    "start": "node app/src/server.js",
+    "dev": "nodemon app/src/server.js",
+    "test:api": "vitest app/tests/claims.api.test.js",
+    "test:unit": "vitest app/tests/adjudication.test.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/AmaanHaider/claims-adjudication-api.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/AmaanHaider/claims-adjudication-api/issues"
+  },
+  "homepage": "https://github.com/AmaanHaider/claims-adjudication-api#readme"
+}

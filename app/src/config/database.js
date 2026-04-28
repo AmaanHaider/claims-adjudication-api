@@ -1,5 +1,16 @@
 const { Sequelize } = require("sequelize");
 
+function shouldUseSsl(databaseUrl) {
+  try {
+    const url = new URL(databaseUrl);
+    const host = url.hostname;
+    return host !== "localhost" && host !== "127.0.0.1";
+  } catch {
+    // If parsing fails, default to no SSL to avoid breaking local dev.
+    return false;
+  }
+}
+
 function buildSequelize() {
   const databaseUrl = process.env.DATABASE_URL;
   if (!databaseUrl) {
@@ -13,9 +24,19 @@ function buildSequelize() {
         ? console.log
         : false;
 
+  const useSsl = shouldUseSsl(databaseUrl);
+
   return new Sequelize(databaseUrl, {
     dialect: "postgres",
     logging,
+    dialectOptions: useSsl
+      ? {
+          ssl: {
+            require: true,
+            rejectUnauthorized: false,
+          },
+        }
+      : undefined,
   });
 }
 

@@ -18,7 +18,13 @@ function initUsageLedger(sequelize, DataTypes) {
       tableName: "usage_ledger",
       timestamps: true,
       underscored: true,
-      indexes: [{ unique: true, fields: ["member_id", "policy_version_id", "service_type", "benefit_year"] }],
+      indexes: [
+        {
+          name: "usage_ledger_member_policy_service_year_uq",
+          unique: true,
+          fields: ["member_id", "policy_version_id", "service_type", "benefit_year"],
+        },
+      ],
     }
   );
 

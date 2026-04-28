@@ -1,0 +1,382 @@
+{
+  "info": {
+    "_postman_id": "9efba215-4ceb-4d90-9147-7f79897f8d44",
+    "name": "Claims Adjudication API",
+    "description": "Postman collection for locally testing the Claims Adjudication API.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Health",
+      "item": [
+        {
+          "name": "GET /health",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/health",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "health"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Members",
+      "item": [
+        {
+          "name": "GET /members",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/members",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "members"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET /members/:id",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/members/{{memberId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "members",
+                "{{memberId}}"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Policies",
+      "item": [
+        {
+          "name": "GET /policies",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/policies",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "policies"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET /policies/:id",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/policies/{{policyId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "policies",
+                "{{policyId}}"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Claims",
+      "item": [
+        {
+          "name": "POST /claims - partially approved",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 201', function () {",
+                  "  pm.response.to.have.status(201);",
+                  "});",
+                  "const data = pm.response.json();",
+                  "pm.collectionVariables.set('claimId', String(data.id));",
+                  "if (data.ClaimLineItems && data.ClaimLineItems[0]) {",
+                  "  pm.collectionVariables.set('lineItemId', String(data.ClaimLineItems[0].id));",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"memberId\": {{memberId}},\n  \"providerName\": \"City Health Clinic\",\n  \"diagnosisCodes\": [\"M54.5\"],\n  \"lineItems\": [\n    { \"serviceType\": \"primary_care\", \"amountCents\": 20000, \"dateOfService\": \"2026-04-10\" },\n    { \"serviceType\": \"dental\", \"amountCents\": 15000, \"dateOfService\": \"2026-04-10\" }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/claims",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "claims"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST /claims - under review MRI",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('status is 201', function () {",
+                  "  pm.response.to.have.status(201);",
+                  "});",
+                  "const data = pm.response.json();",
+                  "pm.collectionVariables.set('reviewClaimId', String(data.id));",
+                  "if (data.ClaimLineItems && data.ClaimLineItems[0]) {",
+                  "  pm.collectionVariables.set('reviewLineItemId', String(data.ClaimLineItems[0].id));",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"memberId\": {{memberId}},\n  \"providerName\": \"Radiology Center\",\n  \"diagnosisCodes\": [\"R90.0\"],\n  \"lineItems\": [\n    { \"serviceType\": \"mri\", \"amountCents\": 120000, \"dateOfService\": \"2026-04-10\" }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/claims",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "claims"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET /claims",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/claims",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "claims"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET /claims/:id",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/claims/{{claimId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "claims",
+                "{{claimId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST /claims/:id/pay",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/claims/{{claimId}}/pay",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "claims",
+                "{{claimId}}",
+                "pay"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST /claims/:id/pay - reject under review",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/claims/{{reviewClaimId}}/pay",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "claims",
+                "{{reviewClaimId}}",
+                "pay"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST /claims/:id/review",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"lineItemId\": {{reviewLineItemId}},\n  \"decision\": \"approved\",\n  \"explanation\": \"Reviewed and approved in Postman.\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/claims/{{reviewClaimId}}/review",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "claims",
+                "{{reviewClaimId}}",
+                "review"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST /claims/:id/dispute",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reason\": \"I believe this should be covered.\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/claims/{{claimId}}/dispute",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "claims",
+                "{{claimId}}",
+                "dispute"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000"
+    },
+    {
+      "key": "memberId",
+      "value": "1"
+    },
+    {
+      "key": "policyId",
+      "value": "1"
+    },
+    {
+      "key": "claimId",
+      "value": ""
+    },
+    {
+      "key": "lineItemId",
+      "value": ""
+    },
+    {
+      "key": "reviewClaimId",
+      "value": ""
+    },
+    {
+      "key": "reviewLineItemId",
+      "value": ""
+    }
+  ]
+}

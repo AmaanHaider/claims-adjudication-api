@@ -3,20 +3,27 @@ import request from "supertest";
 
 require("dotenv").config();
 
-const { createApp } = require("../src/app");
-const {
-  sequelize,
-  Member,
-  Policy,
-  PolicyVersion,
-  MemberPolicyEnrollment,
-  CoverageRule,
-  UsageLedger,
-} = require("../src/models");
+const hasDatabaseUrl = typeof process.env.DATABASE_URL === "string" && process.env.DATABASE_URL.length > 0;
 
 vi.setConfig({ hookTimeout: 30000, testTimeout: 30000 });
 
-describe("Claims API (integration)", () => {
+describe(hasDatabaseUrl ? "Claims API (integration)" : "Claims API (integration) [skipped: DATABASE_URL not set]", () => {
+  if (!hasDatabaseUrl) {
+    it.skip("requires DATABASE_URL to run integration tests", () => {});
+    return;
+  }
+
+  const { createApp } = require("../src/app");
+  const {
+    sequelize,
+    Member,
+    Policy,
+    PolicyVersion,
+    MemberPolicyEnrollment,
+    CoverageRule,
+    UsageLedger,
+  } = require("../src/models");
+
   const app = createApp();
 
   const memberId = 91001;

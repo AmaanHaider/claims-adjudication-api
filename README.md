@@ -1,46 +1,46 @@
 # Claims Adjudication API
 
-API-only claims adjudication system (deterministic, rule-based).
+Claims processing API that adjudicates insurance claim line items against stored coverage rules and tracks claim lifecycle state.
 
-This submission focuses on domain modeling, adjudication logic, lifecycle state handling, and explainable decisions. It intentionally does not include a frontend.
+## Features
 
-## Stack
+- Submit claims with multiple line items
+- Line-item adjudication with payable amount + human-readable explanation
+- Annual limit tracking via a usage ledger
+- Claim + line-item lifecycle actions (review, pay, dispute)
+- Swagger UI for interaction
 
-- Node.js + Express
-- PostgreSQL + Sequelize
-- Vitest + Supertest
-- Swagger/OpenAPI
+## Requirements
 
-## Environment variables
+- Node.js (18+ recommended)
+- PostgreSQL
 
-Create a `.env` file (do **not** commit it). See `.env.example`.
+## Setup
 
-- **`DATABASE_URL`**: PostgreSQL connection string
-  - Local example: `postgres://USER:PASSWORD@localhost:5432/claims_adjudication`
-  - Hosted (e.g. Railway): use the provided `DATABASE_URL`
-- **`PORT`** (optional): defaults to `3000`
+1) Create a `.env` (do **not** commit it). See `.env.example`.
 
-Note: integration/API tests use your configured `DATABASE_URL`. If it points to a hosted DB, tests may be slower.
+- `DATABASE_URL=postgres://USER:PASSWORD@localhost:5432/claims_adjudication`
+- `PORT=3000` (optional)
 
-## Install
+2) Install dependencies
 
 ```bash
 npm install
 ```
 
-## Seed the database
-
-This assignment uses `sequelize.sync()` for setup simplicity (production should use migrations).
+3) Seed the database
 
 ```bash
 npm run db:seed
 ```
 
-## Run the server
+4) Run the server
 
 ```bash
 npm run dev
 ```
+
+## Usage
 
 Health check:
 
@@ -48,34 +48,27 @@ Health check:
 curl -s http://localhost:3000/health
 ```
 
-## Swagger / OpenAPI
+Swagger UI: `http://localhost:3000/api-docs`
 
-When the server is running:
+## Tests
 
-- Swagger UI: `http://localhost:3000/api-docs`
-- OpenAPI JSON: `http://localhost:3000/api-docs.json`
-
-## Run tests
+Unit tests:
 
 ```bash
-npm test -- --run
+npm run test:unit -- --run
 ```
 
-## What is implemented
+Integration/API tests require `DATABASE_URL` (skipped if not present):
 
-- Claim submission with multiple line items
-- Policy/version resolution per line item using each line item's `dateOfService`
-- Line-item adjudication against stored coverage rules
-- Claim and line-item lifecycle states
-- Human-readable explanations on decisions
-- Manual review, payment, and dispute endpoints
-- Swagger/OpenAPI documentation
+```bash
+npm run test:api -- --run
+```
 
-## Known limitations
+## AI artifacts (chat exports)
 
-- `AuditLog` is modeled but not yet populated by lifecycle actions.
-- Deductible behavior is represented in the rule model but not fully implemented end to end.
-- Integration tests use the configured `DATABASE_URL`, so a hosted Postgres instance can make test runs slower than local development.
+- `ai-artifacts/chat-export-*.md`
+- `ai-artifacts/prompts.md`
+- `ai-artifacts/corrections.md`
 
 ## Example: submit a claim
 

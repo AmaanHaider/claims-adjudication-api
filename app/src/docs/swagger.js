@@ -232,7 +232,7 @@ const openApiSpec = {
     schemas: {
       SubmitClaimRequest: {
         type: "object",
-        required: ["memberId", "providerName", "diagnosisCodes", "lineItems"],
+        required: ["memberId", "providerName", "lineItems"],
         properties: {
           memberId: { type: "integer", example: 1 },
           providerName: { type: "string", example: "City Health Clinic" },
@@ -254,10 +254,9 @@ const openApiSpec = {
         properties: {
           serviceType: {
             type: "string",
-            enum: ["primary_care", "specialist_visit", "physical_therapy", "mri", "dental"],
             example: "physical_therapy",
           },
-          amountCents: { type: "integer", minimum: 1, example: 30000 },
+          amountCents: { type: "integer", minimum: 0, example: 30000 },
           dateOfService: { type: "string", format: "date", example: "2026-04-10" },
         },
       },

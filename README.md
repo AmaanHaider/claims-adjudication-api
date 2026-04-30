@@ -22,19 +22,33 @@ Claims processing API that adjudicates insurance claim line items against stored
 - `DATABASE_URL=postgres://USER:PASSWORD@localhost:5432/claims_adjudication`
 - `PORT=3000` (optional)
 
-2) Install dependencies
+2) Ensure Postgres is running and create the database
+
+- Start Postgres (example using Homebrew):
+
+```bash
+brew services start postgresql
+```
+
+- Create the database (adjust user/host if needed):
+
+```bash
+createdb claims_adjudication
+```
+
+3) Install dependencies
 
 ```bash
 npm install
 ```
 
-3) Seed the database
+4) Seed the database
 
 ```bash
 npm run db:seed
 ```
 
-4) Run the server
+5) Run the server
 
 ```bash
 npm run dev
@@ -58,11 +72,15 @@ Unit tests:
 npm run test:unit -- --run
 ```
 
-Integration/API tests require `DATABASE_URL` (skipped if not present):
+Integration/API tests require `DATABASE_URL` (they will be skipped if it's not set):
 
 ```bash
 npm run test:api -- --run
 ```
+
+Notes:
+
+- API tests run against the database referenced by `DATABASE_URL`. For best reliability and speed, point this to a local Postgres database.
 
 ## AI artifacts (chat exports)
 
